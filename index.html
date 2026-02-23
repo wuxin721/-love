@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>致全世界最美丽的女孩</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #000;
+            color: #fff;
+            font-family: 'Microsoft YaHei', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* 初始开启页面 */
+        #start-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at center, #1a0a2e 0%, #000000 100%);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 1s ease-out;
+        }
+
+        #start-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .start-title {
+            font-size: 3rem;
+            color: #ff69b4;
+            text-shadow: 0 0 20px #ff1493, 0 0 40px #ff1493;
+            margin-bottom: 30px;
+            animation: titlePulse 2s ease-in-out infinite;
+        }
+
+        @keyframes titlePulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+        }
+
+        .start-btn {
+            padding: 20px 60px;
+            font-size: 1.5rem;
+            background: linear-gradient(135deg, #ff69b4, #ff1493);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 0 30px rgba(255, 105, 180, 0.6);
+            transition: all 0.3s ease;
+            animation: btnGlow 2s ease-in-out infinite;
+        }
+
+        .start-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 50px rgba(255, 105, 180, 0.9);
+        }
+
+        @keyframes btnGlow {
+            0%, 100% { box-shadow: 0 0 30px rgba(255, 105, 180, 0.6); }
+            50% { box-shadow: 0 0 50px rgba(255, 105, 180, 0.9); }
+        }
+
+        #countdown-container {
+            position: absolute;
+            z-index: 10;
+            font-size: 10rem;
+            font-weight: bold;
+            color: #ff0000;
+            text-shadow: 0 0 20px rgba(255, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #final-content {
+            position: absolute;
+            z-index: 20;
+            text-align: center;
+            display: none;
+            opacity: 0;
+            transition: opacity 2s ease-in;
+        }
+
+        .final-text {
+            font-size: 3.5rem;
+            color: #ff69b4;
+            text-shadow: 0 0 10px #ff1493, 0 0 20px #ff1493, 0 0 30px #ff1493;
+            line-height: 1.6;
+            font-weight: bold;
+            animation: textGlow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes textGlow {
+            0% {
+                text-shadow: 0 0 10px #ff1493, 0 0 20px #ff1493, 0 0 30px #ff1493;
+            }
+            100% {
+                text-shadow: 0 0 20px #ff1493, 0 0 40px #ff1493, 0 0 60px #ff1493, 0 0 80px #ff0000;
+            }
+        }
+
+        /* 音乐控制按钮 */
+        .music-control {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ff69b4, #ff1493);
+            color: white;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            box-shadow: 0 0 20px rgba(255, 105, 180, 0.6);
+            z-index: 50;
+            transition: all 0.3s ease;
+            display: none;
+        }
+
+        .music-control.show {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .music-control:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 30px rgba(255, 105, 180, 0.9);
+        }
+
+        .music-control.playing {
+            animation: musicRotate 2s linear infinite;
+        }
+
+        @keyframes musicRotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .music-control.paused {
+            animation: none;
+            opacity: 0.7;
+        }
+
+        @media (max-width: 768px) {
+            .final-text { font-size: 2rem; }
+            #countdown-container { font-size: 6rem; }
+            .start-title { font-size: 2rem; }
+            .start-btn { padding: 15px 40px; font-size: 1.2rem; }
+            .music-control { width: 50px; height: 50px; font-size: 24px; bottom: 20px; right: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 初始开启页面 -->
+    <div id="start-overlay">
+        <div class="start-title">💝 有一份惊喜等你开启 💝</div>
+        <button class="start-btn" onclick="startExperience()">✨ 点击开启 ✨</button>
+    </div>
+
+    <canvas id="fireworksCanvas"></canvas>
+    <div id="countdown-container">5</div>
+
+    <div id="final-content">
+        <div class="final-text">致全世界<br>最美丽的<br>女孩</div>
+    </div>
+
+    <!-- 背景音乐 -->
+    <audio id="bgm" loop preload="auto">
+        <source src="./media/bgm.mp3" type="audio/mpeg">
+    </audio>
+
+    <!-- 音乐控制按钮 -->
+    <button class="music-control" id="musicBtn" onclick="toggleMusic()">🎵</button>
+
+    <script>
+        // 全局变量
+        const bgm = document.getElementById('bgm');
+        const musicBtn = document.getElementById('musicBtn');
+        const startOverlay = document.getElementById('start-overlay');
+        const countdownEl = document.getElementById('countdown-container');
+        const finalContentEl = document.getElementById('final-content');
+        
+        let count = 5;
+        let fireworksActive = false;
+        let isPlaying = false;
+        let isMuted = true;
+
+        // 开始体验（用户点击后）
+        function startExperience() {
+            // 隐藏开启页面
+            startOverlay.classList.add('hidden');
+            
+            // 播放背景音乐
+            bgm.play().then(() => {
+                isPlaying = true;
+                isMuted = false;
+                musicBtn.classList.add('show', 'playing');
+            }).catch(e => {
+                console.log('音乐播放失败:', e);
+                musicBtn.classList.add('show', 'paused');
+            });
+            
+            // 显示倒计时
+            countdownEl.style.display = 'flex';
+            
+            // 开始倒计时
+            const timer = setInterval(() => {
+                count--;
+                if (count > 0) {
+                    countdownEl.innerText = count;
+                    createFirework(window.innerWidth / 2, window.innerHeight / 2, true);
+                } else {
+                    clearInterval(timer);
+                    countdownEl.style.display = 'none';
+                    fireworksActive = true;
+                    startGrandFinale();
+                }
+            }, 1000);
+        }
+
+        // 切换音乐播放/暂停
+        function toggleMusic() {
+            if (isPlaying) {
+                bgm.pause();
+                musicBtn.textContent = '🔇';
+                musicBtn.classList.remove('playing');
+                musicBtn.classList.add('paused');
+            } else {
+                bgm.play();
+                musicBtn.textContent = '🎵';
+                musicBtn.classList.add('playing');
+                musicBtn.classList.remove('paused');
+            }
+            isPlaying = !isPlaying;
+        }
+
+        // 盛大烟花表演
+        function startGrandFinale() {
+            // 显示文字
+            setTimeout(() => {
+                finalContentEl.style.display = 'block';
+                setTimeout(() => {
+                    finalContentEl.style.opacity = '1';
+                }, 50);
+            }, 800);
+
+            // 初始密集烟花
+            let bursts = 0;
+            const burstInterval = setInterval(() => {
+                createRandomFirework();
+                bursts++;
+                if (bursts > 30) clearInterval(burstInterval);
+            }, 150);
+
+            // 持续烟花（文字显示后一直放）
+            setInterval(() => {
+                if (fireworksActive) {
+                    createRandomFirework();
+                    createRandomFirework();
+                }
+            }, 400);
+        }
+
+        // 随机位置烟花
+        function createRandomFirework() {
+            const x = Math.random() * window.innerWidth * 0.8 + window.innerWidth * 0.1;
+            const y = Math.random() * window.innerHeight * 0.5 + window.innerHeight * 0.1;
+            const colors = ['#ff0000', '#ffff00', '#00ff00', '#00ffff', '#ff00ff', '#ffffff', '#ff69b4', '#ffa500'];
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            createFirework(x, y, false, color);
+        }
+
+        // Canvas 设置
+        const canvas = document.getElementById('fireworksCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let particles = [];
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        // 粒子类
+        class Particle {
+            constructor(x, y, color, isSmall = false) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                const angle = Math.random() * Math.PI * 2;
+                const speed = isSmall ? Math.random() * 3 + 2 : Math.random() * 8 + 4;
+                this.vx = Math.cos(angle) * speed;
+                this.vy = Math.sin(angle) * speed;
+                this.alpha = 1;
+                this.decay = Math.random() * 0.02 + 0.01;
+                this.gravity = 0.08;
+                this.size = Math.random() * 4 + 2;
+            }
+
+            update() {
+                this.vx *= 0.95;
+                this.vy *= 0.95;
+                this.vy += this.gravity;
+                this.x += this.vx;
+                this.y += this.vy;
+                this.alpha -= this.decay;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = this.color;
+                ctx.restore();
+            }
+        }
+
+        // 创建烟花
+        function createFirework(x, y, isSmall = false, specificColor = null) {
+            const particleCount = isSmall ? 50 : 150;
+            const colors = specificColor ? [specificColor] : ['#ff0000', '#ffff00', '#00ff00', '#00ffff', '#ff00ff', '#ffffff', '#ff69b4', '#ffa500', '#ff4500', '#7fff00'];
+            
+            for (let i = 0; i < particleCount; i++) {
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                particles.push(new Particle(x, y, color, isSmall));
+            }
+        }
+
+        // 动画循环
+        function animate() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+                particles[i].update();
+                particles[i].draw();
+                if (particles[i].alpha <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+</body>
+</html>
